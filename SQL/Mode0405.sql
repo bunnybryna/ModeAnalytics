@@ -1,4 +1,4 @@
---Basic SQL
+--BASIC SQL
 SELECT *
   FROM tutorial.us_housing_units
 
@@ -170,3 +170,31 @@ SELECT *
   WHERE year_rank BETWEEN 10 AND 20
   AND year IN (1993,2003,2013)
   ORDER BY year, year_rank
+  
+-- TERMEDIATE SQL
+
+SELECT COUNT(*)
+  FROM tutorial.aapl_historical_stock_price
+
+SELECT COUNT(high)
+  FROM tutorial.aapl_historical_stock_price
+  
+-- practice:Write a query that determines counts of every single column
+       COUNT(month) AS month,
+       COUNT(open) AS open,
+       COUNT(high) AS high,
+       COUNT(low) AS low,
+       COUNT(close) AS close,
+       COUNT(volume) AS volume
+  FROM tutorial.aapl_historical_stock_price  
+  
+SELECT SUM(volume)
+  FROM tutorial.aapl_historical_stock_price  
+  
+--practice:Write a query to calculate the average opening price
+SELECT SUM(open)/COUNT(open) AS avg_open_price
+  FROM tutorial.aapl_historical_stock_price  
+  
+-- practice:What was the highest single-day increase in Apple's share value
+SELECT MAX(close - open)
+  FROM tutorial.aapl_historical_stock_price
