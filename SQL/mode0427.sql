@@ -478,3 +478,131 @@ SELECT companies.state_code,
  WHERE acquisitions.company_permalink != '/company/1000memories'
     OR acquisitions.company_permalink IS NULL
  ORDER BY 1
+
+-- practice: show a company's name, "status" (found in the Companies table), and the number of unique investors in that company. 
+-- order by the number of investors from most to fewest. 
+-- limit to only companies in the state of New York. 
+SELECT companies.name AS company_name,
+	companies.status,
+	COUNT (DISTINCT investments.investor_name) AS unique_investors
+FROM tutorial.crunchbase_companies companies
+LEFT JOIN  tutorial.crunchbase_investments investments 
+ON companies.permalink = investments.company_permalink
+WHERE companies.state_code = 'NY'
+GROUP BY 1,2
+ORDER BY 3 DESC
+
+-- practice: list investors based on the number of companies in which they are invested.
+-- (Include a row for companies with no investor=>make no sense), and order from most companies to least.
+SELECT investments.investor_name AS investor,
+COUNT(DISTINCT companies.permalink) AS companies_invested_in
+FROM tutorial.crunchbase_companies companies
+LEFT JOIN tutorial.crunchbase_investments investments
+ON companies.permalink = investments.company_permalink
+GROUP BY 1
+ORDER BY 2 DESC
+
+SELECT COUNT(CASE WHEN companies.permalink IS NOT NULL AND acquisitions.company_permalink IS NULL
+                  THEN companies.permalink ELSE NULL END) AS companies_only,
+       COUNT(CASE WHEN companies.permalink IS NOT NULL AND acquisitions.company_permalink IS NOT NULL
+                  THEN companies.permalink ELSE NULL END) AS both_tables,
+       COUNT(CASE WHEN companies.permalink IS NULL AND acquisitions.company_permalink IS NOT NULL
+                  THEN acquisitions.company_permalink ELSE NULL END) AS acquisitions_only
+  FROM tutorial.crunchbase_companies companies
+  FULL JOIN tutorial.crunchbase_acquisitions acquisitions
+    ON companies.permalink = acquisitions.company_permalink
+
+-- practice: join tutorial.crunchbase_companies and tutorial.crunchbase_investments_part1 using a FULL JOIN.
+-- Count up the number of rows that are matched/unmatched as in the example above.
+SELECT COUNT(CASE WHEN companies.permalink IS NOT NULL AND investments.company_permalink IS NULL
+                  THEN companies.permalink ELSE NULL END) AS companies_only,
+       COUNT(CASE WHEN companies.permalink IS NOT NULL AND investments.company_permalink IS NOT NULL
+                  THEN companies.permalink ELSE NULL END) AS both_tables,
+       COUNT(CASE WHEN companies.permalink IS NULL AND investments.company_permalink IS NOT NULL
+                  THEN investments.company_permalink ELSE NULL END) AS investments_only
+FROM tutorial.crunchbase_companies companies
+FULL JOIN tutorial.crunchbase_investments_part1 investments
+ON companies.permalink = investments.company_permalink
+	
+SELECT *
+  FROM tutorial.crunchbase_investments_part1
+
+ UNION
+
+ SELECT *
+   FROM tutorial.crunchbase_investments_part2
+	
+--  appends the two crunchbase_investments datasets above (including duplicate values). 
+-- Filter the first dataset to only companies with names that start with the letter "T", 
+-- and filter the second to companies names starting with "M" (both not case-sensitive).
+-- Only include the company_permalink, company_name, and investor_name columns.
+	
+SELECT company_permalink,
+       company_name,
+       investor_name
+  FROM tutorial.crunchbase_investments_part1
+ WHERE company_name ILIKE 'T%'
+ 
+ UNION ALL
+
+SELECT company_permalink,
+       company_name,
+       investor_name
+  FROM tutorial.crunchbase_investments_part2
+ WHERE company_name ILIKE 'M%'	
+ 
+-- practice: shows 3 columns. The first indicates which dataset (part 1 or 2) the data comes from
+-- the second shows company status, and the third is a count of the number of investors.  
+SELECT 'investments_part1' AS dataset_name,
+       companies.status,
+       COUNT(DISTINCT investments.investor_permalink) AS investors
+  FROM tutorial.crunchbase_companies companies
+  LEFT JOIN tutorial.crunchbase_investments_part1 investments
+    ON companies.permalink = investments.company_permalink
+ GROUP BY 1,2
+
+ UNION ALL
+ 
+ SELECT 'investments_part2' AS dataset_name,
+       companies.status,
+       COUNT(DISTINCT investments.investor_permalink) AS investors
+  FROM tutorial.crunchbase_companies companies
+  LEFT JOIN tutorial.crunchbase_investments_part2 investments
+    ON companies.permalink = investments.company_permalink
+ GROUP BY 1,2
+
+SELECT companies.permalink,
+       companies.name,
+       companies.status,
+       COUNT(investments.investor_permalink) AS investors
+  FROM tutorial.crunchbase_companies companies
+  LEFT JOIN tutorial.crunchbase_investments_part1 investments
+    ON companies.permalink = investments.company_permalink
+   AND investments.funded_year > companies.founded_year + 5
+ GROUP BY 1,2, 3
+ 
+SELECT companies.permalink,
+       companies.name,
+       investments.company_name,
+       investments.company_permalink
+  FROM tutorial.crunchbase_companies companies
+  LEFT JOIN tutorial.crunchbase_investments_part1 investments
+    ON companies.permalink = investments.company_permalink
+   AND companies.name = investments.company_name
+
+SELECT DISTINCT japan_investments.company_name,
+       japan_investments.company_permalink
+  FROM tutorial.crunchbase_investments_part1 japan_investments
+  JOIN tutorial.crunchbase_investments_part1 gb_investments
+    ON japan_investments.company_name = gb_investments.company_name
+   AND gb_investments.investor_country_code = 'GBR'
+   AND gb_investments.funded_at > japan_investments.funded_at
+ WHERE japan_investments.investor_country_code = 'JPN'
+ ORDER BY 1
+-- Another SELF JOIN example
+-- it matches customers that are from the same city
+SELECT A.CustomerName AS CustomerName1, B.CustomerName AS CustomerName2, A.City
+FROM Customers A, Customers B
+WHERE A.CustomerID <> B.CustomerID
+AND A.City = B.City 
+ORDER BY A.City;
